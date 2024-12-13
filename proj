@@ -1,0 +1,129 @@
+#include <stdio.h>
+#include <conio.h>
+#include <windows.h>
+
+#define SCREEN_WIDTH 80
+#define SCREEN_HEIGHT 25
+#define PLAYER_START_X 40
+#define PLAYER_START_Y 23
+#define BULLET_SPEED 5
+#define ENEMY_SPEED 2
+#define ENEMY_SPAWN_INTERVAL 1000
+
+int playerX, playerY;
+int bulletX, bulletY;
+int enemyX, enemyY;
+int score;
+
+void gotoxy(int x, int y) {
+    COORD coord = {x, y};
+    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
+}
+
+void drawPlayer() {
+    gotoxy(playerX, playerY);
+    printf("A");
+}
+
+void erasePlayer() {
+    gotoxy(playerX, playerY);
+    printf(" ");
+}
+
+void drawBullet() {
+    gotoxy(bulletX, bulletY);
+    printf("|");
+}
+
+void eraseBullet() {
+    gotoxy(bulletX, bulletY);
+    printf(" ");
+}
+
+void drawEnemy() {
+    gotoxy(enemyX, enemyY);
+    printf("V");
+}
+
+void eraseEnemy() {
+    gotoxy(enemyX, enemyY);
+    printf(" ");
+}
+
+void moveBullet() {
+    eraseBullet();
+    bulletY -= BULLET_SPEED;
+    if (bulletY < 0) {
+        bulletY = -1;
+    }
+    drawBullet();
+}
+
+void moveEnemy() {
+    eraseEnemy();
+    enemyY += ENEMY_SPEED;
+    if (enemyY >= SCREEN_HEIGHT) {
+        enemyY = -1;
+        score--;
+        gotoxy(0, 0);
+        printf("Score: %d", score);
+    }
+    drawEnemy();
+}
+
+int collisionCheck() {
+    if (bulletX == enemyX && bulletY == enemyY) {
+        score++;
+        gotoxy(0, 0);
+        printf("Score: %d", score);
+        return 1;
+    }
+    return 0;
+}
+
+int main() {
+    playerX = PLAYER_START_X;
+    playerY = PLAYER_START_Y;
+    bulletX = playerX;
+    bulletY = playerY - 1;
+    enemyX = 0;
+    enemyY = -1;
+    score = 0;
+
+    int tick = 0;
+
+    while (1) {
+        if (kbhit()) {
+            char key = getch();
+            if (key == 'a' && playerX > 0) {
+                erasePlayer();
+                playerX--;
+                drawPlayer();
+            } else if (key == 'd' && playerX < SCREEN_WIDTH - 1) {
+                erasePlayer();
+                playerX++;
+                drawPlayer();
+            } else if (key == 'w' && bulletY == playerY - 1) {
+                bulletX = playerX;
+                bulletY = playerY - 1;
+            }
+        }
+        if (tick % ENEMY_SPAWN_INTERVAL == 0) {
+            enemyX = rand() % SCREEN_WIDTH;
+            enemyY = 0;
+        }
+
+        moveBullet();
+        moveEnemy();
+
+        if (collisionCheck()) {
+            eraseBullet();
+            bulletY = -1;
+        }
+
+        tick++;
+        Sleep(10);
+    }
+
+    return 0;
+}
